@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 
 const CreatePostForm: React.FC = () => {
     const [text, setText] = useState<string>('');
-    const [image, setImage] = useState<File | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [image, setImage] = useState<File | null>(null);// checks if image is set
+    const [loading, setLoading] = useState<boolean>(false);// shows if it's loading submission
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -32,7 +32,7 @@ const CreatePostForm: React.FC = () => {
 
         // Create a new FormData object to send the form data
         const formData = new FormData();
-        formData.append('text', text);
+        formData.append('text', text); //always has ext
 
         // Append the image to the form data if an image is selected
         if (image) {
@@ -41,8 +41,8 @@ const CreatePostForm: React.FC = () => {
 
         try {
             const response = await fetch('https://localhost:7163/Post/CreatePost', {
-                method: 'POST',
-                body: formData,
+                method: 'POST',// http method
+                body: formData, //data sent is body, object is caleld formdata
             });
 
             if (response.ok) {

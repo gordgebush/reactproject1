@@ -1,50 +1,117 @@
-# React + TypeScript + Vite
+# Public Text and Picture Imageboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project showcases a fully functional React frontend, specifically designed to integrate seamlessly with a .NET API backend, providing a complete solution for building dynamic web applications.
 
-Currently, two official plugins are available:
+![screenshot](demoimg.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Create Post Component
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
+Here is a snapshot of the Create Post component, which allows users to publish a post that includes both text and an image, providing an intuitive interface for content creation.
 
 ```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setLoading(true);
+        setError(null);
+        setSuccessMessage(null);
+
+        // Create a new FormData object to send the form data
+        const formData = new FormData();
+        formData.append('text', text); //always has ext
+
+        // Append the image to the form data if an image is selected
+        if (image) {
+            formData.append('image', image);
+        }
+
+        try {
+            const response = await fetch('https://localhost:7163/Post/CreatePost', {
+                method: 'POST',// http method
+                body: formData, //data sent is body, object is caleld formdata
+            });
+
+            if (response.ok) {
+                // If successful, show success message and reset form
+                setSuccessMessage('Post created successfully!');
+                setText(''); // Clear text input after successful post
+                setImage(null); // Clear image selection
+                window.location.reload()//refresh prage
+            } else {
+                // Handle non-200 responses
+                const errorData = await response.json();
+                setError(errorData.message || 'Failed to create post');
+            }
+        } catch (err) {
+            // Log or display the error
+            setError((err as Error).message);
+        } finally {
+            setLoading(false);
+        }
+    };
 })
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Post List Component
+
+This is a snapshot of the Post List component, which displays a collection of published posts. Each post contains both text and an image, which are showcased on the webpage for users to view.
 
 ```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+import React, { useEffect, useState } from 'react';
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+type PostType = {
+    id: number;
+    image: string | null;
+    text: string;
+};
+
+const PostList: React.FC = () => {
+    const [posts, setPosts] = useState<PostType[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            setLoading(true); // Start loading
+            try {
+                const response = await fetch('https://localhost:7163/Post/GetPost');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch posts');
+                }
+                const data: PostType[] = await response.json(); // Array of posts
+                setPosts(data);
+            } catch (err) {
+                setError((err as Error).message);
+            } finally {
+                setLoading(false); // End loading
+            }
+        };
+
+        fetchPosts();
+    }, []);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (error) {
+        return <div>Error: {error}</div>;
+    }
+
+    return (
+        <div>
+            {posts.map(post => (
+                <div key={post.id} className="post-card">
+                    <h2>Post #{post.id}</h2>
+                    <img
+                        src={post.image ? post.image : 'path/to/placeholder-image.jpg'}
+                        alt={`Post ${post.id}`}
+                    />
+                    <p>{post.text}</p>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+export default PostList;
 ```

@@ -9,7 +9,7 @@ import './App.css'
 const App: React.FC = () => {
     return (
         <div className="App">
-            <h1>nice board</h1>
+            <h1>Anon Message Board 1</h1>
             <CreatePostForm />
             <PostList /> {}
         </div>
